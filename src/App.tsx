@@ -125,6 +125,12 @@ export default function App() {
             <span class="logo-text">${logoName}</span>
           `;
         }
+
+        // Update browser/tab title to match the name/logo in the navbar exactly
+        const plainTitle = logoContainer.textContent || logoContainer.innerText || '';
+        if (plainTitle && plainTitle.trim() !== '') {
+          document.title = plainTitle.trim();
+        }
       },
       renderBeranda(data: any) {
         const container = document.getElementById('berandaContent');
