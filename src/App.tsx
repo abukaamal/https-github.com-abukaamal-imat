@@ -110,6 +110,15 @@ export default function App() {
             <img src="${imageUrl}" alt="Logo" class="logo-img" />
             <span class="logo-text">${logoName}</span>
           `;
+          
+          // Update favicon dynamically using the same image/photo as the navbar logo
+          let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.getElementsByTagName('head')[0].appendChild(link);
+          }
+          link.href = imageUrl;
         } else {
           const logoName = data && data.logo_name ? this._sanitize(data.logo_name) : '⚡ dev<span style="-webkit-text-fill-color:#1e293b;">folio</span>';
           logoContainer.innerHTML = `
