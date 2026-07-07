@@ -362,6 +362,20 @@ export default function App() {
         // Show beranda section by default on load
         showSection('beranda');
 
+        // Handle logo click to show beranda (Home)
+        const logoContainer = document.getElementById('logoContainer');
+        if (logoContainer) {
+          logoContainer.style.cursor = 'pointer';
+          logoContainer.onclick = () => {
+            showSection('beranda');
+            window.scrollTo({
+              top: 0,
+              behavior: 'smooth'
+            });
+            closeMenu();
+          };
+        }
+
         const anchors = document.querySelectorAll('a[href^="#"]');
         for (let j = 0; j < anchors.length; j++) {
           const anchor = anchors[j] as HTMLElement;
