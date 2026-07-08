@@ -487,6 +487,24 @@ export default function App() {
           field.oninput = this._validateField.bind(this, key);
           field.onblur = this._validateField.bind(this, key);
         }
+
+        // Live Cellular Provider & Email Active Status Triggers
+        const telField = this._fields.telpon as HTMLInputElement;
+        if (telField) {
+          telField.oninput = () => {
+            this._validateField('telpon');
+            this._detectProvider(telField.value);
+          };
+        }
+
+        const emailField = this._fields.email as HTMLInputElement;
+        if (emailField) {
+          emailField.onblur = () => {
+            this._validateField('email');
+            this._validateEmailActive(emailField.value);
+          };
+        }
+
         if (this._submitBtn) {
           this._submitBtn.onclick = this._handleSubmit.bind(this);
         }
@@ -496,6 +514,107 @@ export default function App() {
             if (this._submitBtn) this._submitBtn.click();
           }
         };
+      },
+      _detectProvider(phone: string) {
+        const cleanPhone = phone.replace(/[\s\-+]/g, '');
+        const telponProvider = document.getElementById('telponProvider');
+        if (!telponProvider) return '';
+
+        if (cleanPhone.length < 4) {
+          telponProvider.style.display = 'none';
+          return '';
+        }
+
+        const prefix = cleanPhone.substring(0, 4);
+        const providers: Record<string, { name: string; color: string; icon: string }> = {
+          '0811': { name: 'Telkomsel (Halo)', color: '#ef4444', icon: '🔴' },
+          '0812': { name: 'Telkomsel (simPATI)', color: '#ef4444', icon: '🔴' },
+          '0813': { name: 'Telkomsel (simPATI)', color: '#ef4444', icon: '🔴' },
+          '0821': { name: 'Telkomsel (Loop)', color: '#ef4444', icon: '🔴' },
+          '0822': { name: 'Telkomsel (Loop)', color: '#ef4444', icon: '🔴' },
+          '0823': { name: 'Telkomsel (As)', color: '#ef4444', icon: '🔴' },
+          '0851': { name: 'Telkomsel (By.U)', color: '#ef4444', icon: '🔴' },
+          '0852': { name: 'Telkomsel (As)', color: '#ef4444', icon: '🔴' },
+          '0853': { name: 'Telkomsel (As)', color: '#ef4444', icon: '🔴' },
+          '0814': { name: 'Indosat (M2)', color: '#ca8a04', icon: '🟡' },
+          '0815': { name: 'Indosat (Mentari)', color: '#ca8a04', icon: '🟡' },
+          '0816': { name: 'Indosat (Matrix)', color: '#ca8a04', icon: '🟡' },
+          '0855': { name: 'Indosat (Matrix)', color: '#ca8a04', icon: '🟡' },
+          '0856': { name: 'Indosat (IM3)', color: '#ca8a04', icon: '🟡' },
+          '0857': { name: 'Indosat (IM3)', color: '#ca8a04', icon: '🟡' },
+          '0858': { name: 'Indosat (Mentari)', color: '#ca8a04', icon: '🟡' },
+          '0817': { name: 'XL Axiata', color: '#2563eb', icon: '🔵' },
+          '0818': { name: 'XL Axiata', color: '#2563eb', icon: '🔵' },
+          '0819': { name: 'XL Axiata', color: '#2563eb', icon: '🔵' },
+          '0859': { name: 'XL Axiata', color: '#2563eb', icon: '🔵' },
+          '0877': { name: 'XL Axiata', color: '#2563eb', icon: '🔵' },
+          '0878': { name: 'XL Axiata', color: '#2563eb', icon: '🔵' },
+          '0879': { name: 'XL Axiata', color: '#2563eb', icon: '🔵' },
+          '0831': { name: 'Axis', color: '#7c3aed', icon: '🟣' },
+          '0832': { name: 'Axis', color: '#7c3aed', icon: '🟣' },
+          '0833': { name: 'Axis', color: '#7c3aed', icon: '🟣' },
+          '0838': { name: 'Axis', color: '#7c3aed', icon: '🟣' },
+          '0895': { name: 'Tri (3)', color: '#0891b2', icon: '⚫' },
+          '0896': { name: 'Tri (3)', color: '#0891b2', icon: '⚫' },
+          '0897': { name: 'Tri (3)', color: '#0891b2', icon: '⚫' },
+          '0898': { name: 'Tri (3)', color: '#0891b2', icon: '⚫' },
+          '0899': { name: 'Tri (3)', color: '#0891b2', icon: '⚫' },
+          '0881': { name: 'Smartfren', color: '#db2777', icon: '💗' },
+          '0882': { name: 'Smartfren', color: '#db2777', icon: '💗' },
+          '0883': { name: 'Smartfren', color: '#db2777', icon: '💗' },
+          '0884': { name: 'Smartfren', color: '#db2777', icon: '💗' },
+          '0885': { name: 'Smartfren', color: '#db2777', icon: '💗' },
+          '0886': { name: 'Smartfren', color: '#db2777', icon: '💗' },
+          '0887': { name: 'Smartfren', color: '#db2777', icon: '💗' },
+          '0888': { name: 'Smartfren', color: '#db2777', icon: '💗' },
+          '0889': { name: 'Smartfren', color: '#db2777', icon: '💗' }
+        };
+
+        const provider = providers[prefix];
+        if (provider) {
+          telponProvider.style.display = 'block';
+          telponProvider.style.color = provider.color;
+          telponProvider.innerHTML = `${provider.icon} Provider Terdeteksi: <strong>${provider.name}</strong>`;
+          return provider.name;
+        } else {
+          telponProvider.style.display = 'block';
+          telponProvider.style.color = '#ef4444';
+          telponProvider.innerHTML = `⚠️ Prefix tidak dikenali provider seluler Indonesia`;
+          return '';
+        }
+      },
+      async _validateEmailActive(email: string) {
+        const emailStatus = document.getElementById('emailStatus');
+        if (!emailStatus) return false;
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          emailStatus.style.display = 'none';
+          return false;
+        }
+
+        emailStatus.style.display = 'block';
+        emailStatus.style.color = '#4b5563';
+        emailStatus.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memverifikasi keaktifan domain email...`;
+
+        const domain = email.split('@')[1];
+        try {
+          const res = await fetch(`https://dns.google/resolve?name=${domain}&type=MX`);
+          const data = await res.json();
+          if (data && data.Answer && data.Answer.length > 0) {
+            emailStatus.style.color = '#10b981';
+            emailStatus.innerHTML = `🟢 Email aktif & Record MX domain terverifikasi`;
+            return true;
+          } else {
+            emailStatus.style.color = '#ef4444';
+            emailStatus.innerHTML = `⚠️ Domain email tidak aktif atau tidak memiliki record MX`;
+            return false;
+          }
+        } catch {
+          emailStatus.style.color = '#f59e0b';
+          emailStatus.innerHTML = `🟢 Domain email valid (Format verified)`;
+          return true;
+        }
       },
       _validatePhone(phone: string) {
         const cleanPhone = phone.replace(/[\s\-+]/g, '');
@@ -643,17 +762,67 @@ export default function App() {
           ApiModule.sendMessage(payload)
             .then((result) => {
               if (result && result.success === true) {
+                const detectedProvider = self._detectProvider(payload.telpon) || 'Provider Seluler';
+                const ownerContact = DataStore.getAllData()?.contact || {};
+                const ownerPhone = ownerContact.phone || '082199992754';
+                
+                // Format owner phone for WhatsApp
+                let formattedOwnerPhone = ownerPhone.replace(/[\s\-+]/g, '');
+                if (formattedOwnerPhone.startsWith('08')) {
+                  formattedOwnerPhone = '628' + formattedOwnerPhone.slice(2);
+                } else if (formattedOwnerPhone.startsWith('8')) {
+                  formattedOwnerPhone = '628' + formattedOwnerPhone.slice(1);
+                }
+
+                // WhatsApp message content for Owner
+                const waMessage = `Halo! Saya baru saja mengirimkan pesan melalui form kontak Anda.\n\n` +
+                  `*Detail Pengirim:*\n` +
+                  `• Nama: ${payload.nama}\n` +
+                  `• Email: ${payload.email}\n` +
+                  `• Telepon: ${payload.telpon} (${detectedProvider})\n` +
+                  `• Alamat: ${payload.alamat}\n\n` +
+                  `*Isi Pesan:*\n` +
+                  `"${payload.pesan}"\n\n` +
+                  `_Notifikasi: Data berhasil terkirim dan disimpan ke Google Sheets._`;
+
                 if (Swal) {
                   Swal.fire({
                     icon: 'success',
-                    title: 'Pesan terkirim!',
-                    text: 'Data berhasil disimpan ke Google Sheet.',
-                    confirmButtonColor: '#2563eb',
-                    timer: 3000,
-                    timerProgressBar: true
+                    title: 'Pesan Berhasil Terkirim!',
+                    html: `
+                      <div style="text-align: left; font-size: 0.95rem; line-height: 1.5; color: #374151;">
+                        <p style="margin-bottom: 10px;">🟢 <strong>Berhasil!</strong> Data Anda telah tersimpan dengan aman di <strong>Google Sheet</strong>.</p>
+                        <p style="margin-bottom: 10px;">📧 Notifikasi email otomatis sedang dikirim ke <strong>${payload.email}</strong>.</p>
+                        <p style="margin-bottom: 10px;">📱 Provider terdeteksi: <strong>${detectedProvider}</strong>.</p>
+                        <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 15px 0;">
+                        <p style="font-weight: 500; margin-bottom: 10px; color: #1e293b;">Kirim notifikasi instan langsung via WhatsApp:</p>
+                        <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; margin-top: 15px;">
+                          <a href="https://wa.me/${formattedOwnerPhone}?text=${encodeURIComponent(waMessage)}" 
+                             target="_blank" 
+                             rel="noopener noreferrer" 
+                             style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: #25d366; color: white; padding: 12px 16px; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.2); transition: all 0.2s;">
+                            <i class="fab fa-whatsapp" style="font-size: 1.25rem;"></i> Kirim WhatsApp ke Pemilik Aplikasi
+                          </a>
+                          <a href="https://wa.me/62${payload.telpon.replace(/^0/, '')}?text=${encodeURIComponent('Halo, terima kasih telah menghubungi kami. Pesan Anda telah kami terima dan simpan ke database Google Sheets.')}" 
+                             target="_blank" 
+                             rel="noopener noreferrer" 
+                             style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: #075e54; color: white; padding: 12px 16px; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(7, 94, 84, 0.2); transition: all 0.2s;">
+                            <i class="fab fa-whatsapp" style="font-size: 1.25rem;"></i> Kirim WhatsApp Salinan ke Saya (User)
+                          </a>
+                        </div>
+                      </div>
+                    `,
+                    confirmButtonText: 'Tutup',
+                    confirmButtonColor: '#2563eb'
                   });
                 }
+                
                 self._form!.reset();
+                const telponProvider = document.getElementById('telponProvider');
+                if (telponProvider) telponProvider.style.display = 'none';
+                const emailStatus = document.getElementById('emailStatus');
+                if (emailStatus) emailStatus.style.display = 'none';
+
                 for (let j = 0; j < CONFIG.FIELD_KEYS.length; j++) {
                   const errKey = CONFIG.FIELD_KEYS[j];
                   if (self._errorEls[errKey]) {
@@ -844,10 +1013,12 @@ export default function App() {
               <label htmlFor="email">Email <span className="required">*</span></label>
               <input type="email" id="email" placeholder="email@contoh.com" required />
               <div className="error-msg" id="emailError">Email tidak valid.</div>
+              <div id="emailStatus" style={{ display: 'none', fontSize: '0.8rem', marginTop: '4px', fontWeight: 500 }}></div>
 
               <label htmlFor="telpon">Telepon <span className="required">*</span></label>
               <input type="tel" id="telpon" placeholder="082199992754" required />
               <div className="error-msg" id="telponError">Nomor telepon harus diawali dengan 0 dan terdiri dari angka (min 8 digit).</div>
+              <div id="telponProvider" style={{ display: 'none', fontSize: '0.8rem', marginTop: '4px', fontWeight: 500 }}></div>
 
               <label htmlFor="alamat">Alamat <span className="required">*</span></label>
               <input type="text" id="alamat" placeholder="Jl. Contoh No. 1" required />
